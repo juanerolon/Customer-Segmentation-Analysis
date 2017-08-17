@@ -2,6 +2,9 @@
 
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+sns.set(style='whitegrid', context='notebook')
 from IPython.display import display # Allows the use of display() for DataFrames
 
 
@@ -12,6 +15,9 @@ try:
     print "Wholesale customers dataset has {} samples with {} features each.".format(*data.shape)
 except:
     print "Dataset could not be loaded. Is the dataset missing?"
+
+print "Data column names:\n"
+print list(data.columns)
 print "Dataset preview:\n"
 print data.head(5)
 print ""
@@ -34,3 +40,6 @@ samples = pd.DataFrame(data.loc[indices], columns = data.keys()).reset_index(dro
 print "Chosen samples of wholesale customers dataset:"
 display(samples)
 
+cols = list(data.columns)
+sns.pairplot(data[cols], size=2.0)
+plt.show()

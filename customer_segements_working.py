@@ -58,6 +58,38 @@ for feat in cols:
 
 
 
+
+log_data = np.log(data)
+log_samples = np.log(samples)
+
+# For each feature find the data points with extreme high or low values
+for feature in log_data.keys():
+    Q1 = np.percentile(log_data[feature], 25)
+    Q3 = np.percentile(log_data[feature], 75)
+    step = 1.5 * (Q3 - Q1)
+
+    # Display the outliers
+    print "Data points considered outliers for the feature '{}':".format(feature)
+    display(log_data[~((log_data[feature] >= Q1 - step) & (log_data[feature] <= Q3 + step))])
+
+# OPTIONAL: Select the indices for data points you wish to remove
+outliers = []
+
+# Remove the outliers, if any were specified
+# good_data = log_data.drop(log_data.index[outliers]).reset_index(drop = True)
+
+
+
+
+
+
+
+
+
+
+
+#--------------------------- OTHER PLOTS --------------------------
+
 #Normality tests:
 if False:
 
@@ -77,15 +109,23 @@ if False:
 
 #Create histograms:
 if False:
+
     data.hist()
+    plt.ylim(40)
     plt.tight_layout()
     plt._show()
 
 #Create box plots
 if False:
-    data.boxplot()
+    #plt.ylim(40000)
+    fdat = data.drop('Frozen', axis=1)
+    fdat = fdat.drop('Delicatessen', axis=1)
+
+    fdat.boxplot()
+    #data.boxplot()
     plt.tight_layout()
     plt._show()
+    plt.grid(None)
 
 #Create scatter matrix
 if False:

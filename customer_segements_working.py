@@ -2,11 +2,17 @@
 
 import numpy as np
 import pandas as pd
+import scipy as sp
+
+from scipy.stats import normaltest
+
 
 import matplotlib.pyplot as plt
 import seaborn as sns
 sns.set(style='whitegrid', context='notebook')
 from IPython.display import display # Allows the use of display() for DataFrames
+
+
 
 # Load the wholesale customers dataset
 try:
@@ -40,10 +46,46 @@ samples = pd.DataFrame(data.loc[indices], columns = data.keys()).reset_index(dro
 print "Chosen samples of wholesale customers dataset:"
 display(samples)
 
-#data.hist()
-data.boxplot()
-plt.tight_layout()
-plt._show()
+print ""
+print "Experimenting: \n"
+
+cols = list(data.columns)
+#print data[cols].values[:, 0]
+#print data['Fresh'].values
+
+for feat in cols:
+    print normaltest(data[feat].values)
+
+
+
+#Normality tests:
+if False:
+
+    print ""
+    print "Normality tests\n:"
+
+    cols = list(data.columns)
+    value, p = normaltest(data[cols].values[:, 0])
+
+    print(value, p)
+
+    if p >= 0.05:
+        print('It is likely that result1 is normal')
+    else:
+        print('It is unlikely that result1 is normal')
+
+
+#Create histograms:
+if False:
+    data.hist()
+    plt.tight_layout()
+    plt._show()
+
+#Create box plots
+if False:
+    data.boxplot()
+    plt.tight_layout()
+    plt._show()
 
 #Create scatter matrix
 if False:

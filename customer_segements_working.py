@@ -58,25 +58,66 @@ for feat in cols:
 
 
 
-
+#Feature scaling
 log_data = np.log(data)
 log_samples = np.log(samples)
 
-# For each feature find the data points with extreme high or low values
-for feature in log_data.keys():
+
+
+
+
+#Outliers
+
+if False:
+
+    print '\n"Frozen" outliers\n'
+
+    feature = 'Frozen'
+
     Q1 = np.percentile(log_data[feature], 25)
     Q3 = np.percentile(log_data[feature], 75)
     step = 1.5 * (Q3 - Q1)
 
-    # Display the outliers
-    print "Data points considered outliers for the feature '{}':".format(feature)
-    display(log_data[~((log_data[feature] >= Q1 - step) & (log_data[feature] <= Q3 + step))])
+    print 'Q1,Q3,step = ', Q1, Q3, step
 
-# OPTIONAL: Select the indices for data points you wish to remove
-outliers = []
+    outlier_data = log_data[~((log_data[feature] >= Q1 - step) & (log_data[feature] <= Q3 + step))]
 
-# Remove the outliers, if any were specified
-# good_data = log_data.drop(log_data.index[outliers]).reset_index(drop = True)
+    print outlier_data.head(5)
+
+    print '\n Outlier data indexes:\n'
+
+    f_indexes = outlier_data.index.values
+
+    print f_indexes
+
+
+
+
+if True:
+
+    # For each feature find the data points with extreme high or low values
+
+    outliers = []
+    print outliers
+    for feature in log_data.keys():
+        Q1 = np.percentile(log_data[feature], 25)
+        Q3 = np.percentile(log_data[feature], 75)
+        step = 1.5 * (Q3 - Q1)
+
+        # Display the outliers
+        print "Data points considered outliers for the feature '{}':".format(feature)
+        feat_outliers = log_data[~((log_data[feature] >= Q1 - step) & (log_data[feature] <= Q3 + step))]
+        outliers += list(feat_outliers.index.values)
+        #print outliers
+        #display(feat_outliers)
+
+    # OPTIONAL: Select the indices for data points you wish to remove
+    import collections
+    common_outliers = [item for item, count in collections.Counter(outliers).items() if count > 1]
+    print common_outliers
+
+    # Remove the outliers, if any were specified
+    # good_data = log_data.drop(log_data.index[outliers]).reset_index(drop = True)
 
 
 

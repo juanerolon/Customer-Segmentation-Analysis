@@ -13,6 +13,28 @@ sns.set(style='whitegrid', context='notebook')
 from IPython.display import display # Allows the use of display() for DataFrames
 
 
+def pca_results(good_data, pca):
+    '''
+    Create a DataFrame of the PCA results
+    Includes dimension feature weights and explained variance
+    '''
+
+    # Dimension indexing
+    dimensions = dimensions = ['Dimension {}'.format(i) for i in range(1, len(pca.components_) + 1)]
+
+    # PCA components
+    components = pd.DataFrame(np.round(pca.components_, 4), columns=good_data.keys())
+    components.index = dimensions
+
+    # PCA explained variance
+    ratios = pca.explained_variance_ratio_.reshape(len(pca.components_), 1)
+    variance_ratios = pd.DataFrame(np.round(ratios, 4), columns=['Explained Variance'])
+    variance_ratios.index = dimensions
+
+    # Return a concatenated DataFrame
+    return pd.concat([variance_ratios, components], axis=1)
+
+
 
 # Load the wholesale customers dataset
 try:
@@ -114,10 +136,44 @@ if True:
     # OPTIONAL: Select the indices for data points you wish to remove
     import collections
     common_outliers = [item for item, count in collections.Counter(outliers).items() if count > 1]
-    print common_outliers
+    outliers = list(np.unique(np.asarray(outliers)))
+    #print outliers
+
 
     # Remove the outliers, if any were specified
-    # good_data = log_data.drop(log_data.index[outliers]).reset_index(drop = True)
+    good_data = log_data.drop(log_data.index[outliers]).reset_index(drop = True)
+
+    """
+    sns.reset_orig()
+    plt.figure(1, figsize=(10, 9))
+    good_data.boxplot(showfliers=True)
+    plt.ylim(0,15)
+    plt.tight_layout()
+    plt.show()
+
+    """
+
+    print "Number of dimensions in original data set: {} \n".format(data.shape[1])
+    print ""
+
+    from sklearn.decomposition import PCA
+    # TODO: Apply PCA by fitting the good data with the same number of dimensions as features
+    pca = PCA(n_components=data.shape[1])
+    pca.fit(good_data)
+
+    # TODO: Transform log_samples using the PCA fit above
+    pca_samples = pca.transform(log_samples)
+
+    # Generate PCA results plot
+    pca_results = pca_results(good_data, pca)
+
+    print pca_results['Explained Variance'][0] +pca_results['Explained Variance'][1]
+
+    print pca_results['Explained Variance'].cumsum()
+
+
+
+
 
 
 

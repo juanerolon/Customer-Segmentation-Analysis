@@ -51,6 +51,9 @@ print data.head(5)
 print ""
 print "Dataset stats preview:\n"
 
+#Data column names
+cols = list(data.columns)
+
 # Display a description of the dataset
 display(data.describe())
 
@@ -60,118 +63,146 @@ if False:
     print rindexes
     print type(rindexes)
 
-# TODO: Select three indices of your choice you wish to sample from the dataset
-indices = [309, 216, 160]
+# Select three indices of your choice you wish to sample from the dataset
+indices = [309, 216, 22]
 
 # Create a DataFrame of the chosen samples
 samples = pd.DataFrame(data.loc[indices], columns = data.keys()).reset_index(drop = True)
-print "Chosen samples of wholesale customers dataset:"
+
+print "Samples of wholesale customers dataset:"
 display(samples)
-
-print ""
-print "Experimenting: \n"
-
-cols = list(data.columns)
-#print data[cols].values[:, 0]
-#print data['Fresh'].values
-
-for feat in cols:
-    print normaltest(data[feat].values)
-
-
 
 #Feature scaling
 log_data = np.log(data)
 log_samples = np.log(samples)
 
+print "Transformed samples of wholesale customers dataset:"
+# Display the log-transformed sample data
+display(log_samples)
 
+import collections
 
-
-
-#Outliers
-
-if False:
-
-    print '\n"Frozen" outliers\n'
-
-    feature = 'Frozen'
-
+# For each feature find the data points with extreme high or low values
+outliers = []
+for feature in log_data.keys():
+    #Calculate Q1 (25th percentile of the data) for the given feature
     Q1 = np.percentile(log_data[feature], 25)
+
+    #Calculate Q3 (75th percentile of the data) for the given feature
     Q3 = np.percentile(log_data[feature], 75)
+
+    # Use the interquartile range to calculate an outlier step (1.5 times the interquartile range)
     step = 1.5 * (Q3 - Q1)
 
-    print 'Q1,Q3,step = ', Q1, Q3, step
+    # Display the outliers
+    #print "Data points considered outliers for the feature '{}':".format(feature)
+    feat_outliers = log_data[~((log_data[feature] >= Q1 - step) & (log_data[feature] <= Q3 + step))]
+    outliers += list(feat_outliers.index.values)
+    #display(feat_outliers)
 
-    outlier_data = log_data[~((log_data[feature] >= Q1 - step) & (log_data[feature] <= Q3 + step))]
+# OPTIONAL: Select the indices for data points you wish to remove
+common_outliers = [item for item, count in collections.Counter(outliers).items() if count > 1]
 
-    print outlier_data.head(5)
+print "\n"
+print 'Outlier data idexes common to features: {}'.format(common_outliers)
 
-    print '\n Outlier data indexes:\n'
+# Remove the outliers, if any were specified
+outliers = list(np.unique(np.asarray(outliers)))
+good_data = log_data.drop(log_data.index[outliers]).reset_index(drop=True)
 
-    f_indexes = outlier_data.index.values
+from sklearn.decomposition import PCA
 
-    print f_indexes
+# Apply PCA by fitting the good data with the same number of dimensions as features
+pca = PCA(n_components=data.shape[1])
+pca.fit(good_data)
 
+# Transform log_samples using the PCA fit above
+pca_samples = pca.transform(log_samples)
+pca_results = pca_results(good_data, pca)
 
+print "\n"
+print "Principal Components Analysis Results:\n"
+print pca_results
 
+pca = PCA(n_components=2)
+pca.fit(good_data)
+reduced_data = pca.transform(good_data)
+pca_samples = pca.transform(log_samples)
 
-if True:
-
-    # For each feature find the data points with extreme high or low values
-
-    outliers = []
-    print outliers
-    for feature in log_data.keys():
-        Q1 = np.percentile(log_data[feature], 25)
-        Q3 = np.percentile(log_data[feature], 75)
-        step = 1.5 * (Q3 - Q1)
-
-        # Display the outliers
-        print "Data points considered outliers for the feature '{}':".format(feature)
-        feat_outliers = log_data[~((log_data[feature] >= Q1 - step) & (log_data[feature] <= Q3 + step))]
-        outliers += list(feat_outliers.index.values)
-        #print outliers
-        #display(feat_outliers)
-
-    # OPTIONAL: Select the indices for data points you wish to remove
-    import collections
-    common_outliers = [item for item, count in collections.Counter(outliers).items() if count > 1]
-    outliers = list(np.unique(np.asarray(outliers)))
-    #print outliers
-
-
-    # Remove the outliers, if any were specified
-    good_data = log_data.drop(log_data.index[outliers]).reset_index(drop = True)
-
-    """
-    sns.reset_orig()
-    plt.figure(1, figsize=(10, 9))
-    good_data.boxplot(showfliers=True)
-    plt.ylim(0,15)
-    plt.tight_layout()
-    plt.show()
-
-    """
-
-    print "Number of dimensions in original data set: {} \n".format(data.shape[1])
-    print ""
-
-    from sklearn.decomposition import PCA
-    # TODO: Apply PCA by fitting the good data with the same number of dimensions as features
-    pca = PCA(n_components=data.shape[1])
-    pca.fit(good_data)
-
-    # TODO: Transform log_samples using the PCA fit above
-    pca_samples = pca.transform(log_samples)
-
-    # Generate PCA results plot
-    pca_results = pca_results(good_data, pca)
-
-    print pca_results['Explained Variance'][0] +pca_results['Explained Variance'][1]
-
-    print pca_results['Explained Variance'].cumsum()
+# Create a DataFrame for the reduced data
+reduced_data = pd.DataFrame(reduced_data, columns=['Dimension 1', 'Dimension 2'])
 
 
+print "\n"
+print "Sample log-data after applying PCA transformation in two dimensions:\n"
+# Display sample log-data after applying PCA transformation in two dimensions
+display(pd.DataFrame(np.round(pca_samples, 4), columns=['Dimension 1', 'Dimension 2']))
+
+from sklearn.cluster import KMeans
+from sklearn.metrics import silhouette_score
+
+print "\n"
+print "K-Means Silhouette Scoring Tests:\n"
+
+for kn in range(2,9):
+
+    #Apply your clustering algorithm of choice to the reduced data
+    clm = KMeans(n_clusters=kn, random_state=0)
+    clm.fit(reduced_data)
+
+    #Predict the cluster for each data point
+    preds = clm.predict(reduced_data)
+
+    #Find the cluster centers
+    centers = clm.cluster_centers_
+
+    #Predict the cluster for each transformed sample data point
+    sample_preds = clm.predict(pca_samples)
+
+    #Calculate the mean silhouette coefficient for the number of clusters chosen
+    score = silhouette_score(reduced_data, preds, random_state=10)
+    print "Number of clusters = {}, Score = {}".format(kn, np.round(score,4))
+
+print "\n"
+print "Apply K-means procedure to Fit data using two clusters:\n"
+
+clm = KMeans(n_clusters=2, random_state=0)
+clm.fit(reduced_data)
+preds = clm.predict(reduced_data)
+centers = clm.cluster_centers_
+sample_preds = clm.predict(pca_samples)
+score = silhouette_score(reduced_data, preds, random_state=10)
+print "Number of clusters = {}, Score = {}".format(2, np.round(score, 4))
+
+print "\n"
+print "Inverse transform of cluster centers data points\n"
+
+
+#----------- OJO--------------
+#Inverse transform the centers
+log_centers = pca.inverse_transform(centers)
+
+#Exponentiate the centers
+true_centers = np.exp(log_centers)
+
+# Display the true centers
+segments = ['Segment {}'.format(i) for i in range(0,len(centers))]
+true_centers = pd.DataFrame(np.round(true_centers), columns = data.keys())
+true_centers.index = segments
+display(true_centers)
+
+print "\n"
+print "Predict to which clusters the sample points belong:\n"
+
+# Display the predictions
+for i, pred in enumerate(sample_preds):
+    print "Sample point", i, "predicted to be in Cluster", pred
+
+print ""
+print "------------------ >< ------------------\n"
+
+print len(good_data)
+print len(preds)
 
 
 
@@ -185,63 +216,4 @@ if True:
 
 
 
-#--------------------------- OTHER PLOTS --------------------------
-
-#Normality tests:
-if False:
-
-    print ""
-    print "Normality tests\n:"
-
-    cols = list(data.columns)
-    value, p = normaltest(data[cols].values[:, 0])
-
-    print(value, p)
-
-    if p >= 0.05:
-        print('It is likely that result1 is normal')
-    else:
-        print('It is unlikely that result1 is normal')
-
-
-#Create histograms:
-if False:
-
-    data.hist()
-    plt.ylim(40)
-    plt.tight_layout()
-    plt._show()
-
-#Create box plots
-if False:
-    #plt.ylim(40000)
-    fdat = data.drop('Frozen', axis=1)
-    fdat = fdat.drop('Delicatessen', axis=1)
-
-    fdat.boxplot()
-    #data.boxplot()
-    plt.tight_layout()
-    plt._show()
-    plt.grid(None)
-
-#Create scatter matrix
-if False:
-    cols = list(data.columns)
-    sns.pairplot(data[cols], size=2.0)
-    plt.show()
-
-#Create correlation matrix heat map
-if False:
-    cols = list(data.columns)
-    corr_matrix = np.corrcoef(data[cols].values.T)
-    sns.set(font_scale=1.5)
-
-    heat_map = sns.heatmap(corr_matrix, cbar=True, annot=True, square=True, fmt='.2f',
-               annot_kws = {'size': 15}, yticklabels=cols, xticklabels=cols)
-
-    plt.xticks(rotation='vertical')
-    plt.yticks(rotation='horizontal')
-
-    plt.tight_layout()
-    plt.show()
 

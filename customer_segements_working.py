@@ -110,6 +110,8 @@ print 'Outlier data idexes common to features: {}'.format(common_outliers)
 outliers = list(np.unique(np.asarray(outliers)))
 good_data = log_data.drop(log_data.index[outliers]).reset_index(drop=True)
 
+
+
 from sklearn.decomposition import PCA
 
 # Apply PCA by fitting the good data with the same number of dimensions as features
@@ -201,11 +203,67 @@ for i, pred in enumerate(sample_preds):
 print ""
 print "------------------ >< ------------------\n"
 
-print len(good_data)
-print len(preds)
 
 
 
+print type(preds)
+
+print good_data.head(5)
+
+true_good_data = np.exp(good_data)
+
+print good_data.head(5)
+print ""
+print data.head(5)
+print ""
+print true_good_data.head(5)
+print "Number of samples in cleaned data = {} ".format(len(true_good_data))
+print "Number of samples in clustering predictions data = {} ".format(len(preds))
+print ""
+
+print "         Ready for classification         "
+print "------------------ >< ------------------\n"
+
+
+from sklearn.cross_validation import train_test_split
+
+#Split the data into training and testing sets
+
+X_train, X_test, y_train, y_test = train_test_split(true_good_data, preds, test_size = 0.25, random_state = 0)
+
+#Initialize classifier
+
+from time import time
+from sklearn.metrics import fbeta_score
+from sklearn.metrics import accuracy_score
+
+from sklearn.tree import DecisionTreeClassifier
+dt = DecisionTreeClassifier(random_state=0)
+
+start = time()
+learner = dt.fit(X_train, y_train)
+end = time()
+train_time = end-start
+
+start = time()
+predictions_test = learner.predict(X_test)
+predictions_train = learner.predict(X_train)
+end = time()
+pred_time = end-start
+
+
+acc_train_score = accuracy_score(y_train, predictions_train)
+acc_test_score= accuracy_score(y_test, predictions_test)
+
+f_train_score = fbeta_score(y_train, predictions_train, beta=0.5)
+f_test_score  = fbeta_score(y_test, predictions_test, beta=0.5)
+
+print "Classifier Accuracy = {}, F-Score = {} ".format(acc_test_score, f_test_score)
+print ""
+
+predictions_samples = learner.predict(samples)
+
+print predictions_samples
 
 
 

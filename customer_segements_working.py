@@ -146,7 +146,7 @@ from sklearn.metrics import silhouette_score
 print "\n"
 print "K-Means Silhouette Scoring Tests:\n"
 
-for kn in range(2,9):
+for kn in range(2, 9):
 
     #Apply your clustering algorithm of choice to the reduced data
     clm = KMeans(n_clusters=kn, random_state=0)
@@ -221,6 +221,8 @@ print "Number of samples in cleaned data = {} ".format(len(true_good_data))
 print "Number of samples in clustering predictions data = {} ".format(len(preds))
 print ""
 
+
+
 print "         Ready for classification         "
 print "------------------ >< ------------------\n"
 
@@ -286,7 +288,7 @@ print "True centers:\n"
 print true_centers
 
 print ""
-print "Simplified Gaussian generation of samples"
+print " ******  Simplified Gaussian generation of samples  ******"
 
 simdata = []
 for feat in cols:
@@ -304,10 +306,15 @@ for i in range(len(cols)):
 
 simdata_df = pd.DataFrame.from_records(frame, columns=cols)
 
-print simdata_df
+print "Gaussian generated samples:"
+display(simdata_df)
 
+log_simdata = np.log(simdata_df)
+pca2 = PCA(n_components=2)
+pca2.fit(good_data)
+pca2_simdata = pca2.transform(log_simdata)
 
-
+#**************************************************************
 
 
 print "         Ready for visualization         "
@@ -350,5 +357,11 @@ def cluster_results(reduced_data, preds, centers, pca_samples):
         "Cluster Learning on PCA-Reduced Data - Centroids Marked by Number\nTransformed Sample Data Marked by Black Cross");
 
 
-cluster_results(reduced_data, preds, centers, pca_samples)
-plt.show()
+#Predicting cluster membership via decision tree
+predicted_simdata_cls = learner.predict(simdata_df)
+
+print predicted_simdata_cls
+
+
+
+

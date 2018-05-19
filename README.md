@@ -1,5 +1,7 @@
 
-# Customer Segmentation Analysis via Unsupervised Learning
+# Customer Segmentation Analysis via Unsupervised Learning  
+
+### Juan E. Rolon, 2017
 
 <img src="segments_logo.jpg"
      alt="customer_segments"

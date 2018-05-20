@@ -75,3 +75,7 @@ Note (m.u.) is shorthand for *monetary units*.
 ```python
 
 ```
+
+## License
+
+The present project constitutes intellectual work towards completion of Udacity's Machine Learning Engineer Nanodegree. You are free to modify and adapt the code to your needs, but please avoid using an exact copy of this work as your own to obtain credits towards any educational platform, doing so may imply plagiarism on your part.
